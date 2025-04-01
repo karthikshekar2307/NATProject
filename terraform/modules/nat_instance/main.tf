@@ -70,7 +70,7 @@ resource "aws_instance" "natinstance" {
   network_interface {
     device_index         = 1
     network_interface_id = aws_network_interface.private_eni.id
-  
+  }
 
   user_data = var.user_data
 
