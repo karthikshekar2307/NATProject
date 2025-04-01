@@ -88,8 +88,17 @@ resource "aws_instance" "natinstance" {
   # Disable source/dest check
   # We'll run a local-exec to modify instance attribute
   provisioner "local-exec" {
-    command = <<EOT
-      aws ec2 modify-instance-attribute --instance-id ${self.id} --no-source-dest-check --region ${var.aws_region}
-    EOT
-  }
+  command = <<EOT
+    aws ec2 modify-network-interface-attribute \
+      --network-interface-id ${aws_network_interface.public_eni.id} \
+      --no-source-dest-check \
+      --region ap-southeast-2
+
+    aws ec2 modify-network-interface-attribute \
+      --network-interface-id ${aws_network_interface.private_eni.id} \
+      --no-source-dest-check \
+      --region ap-southeast-2
+  EOT
+}
+
 }
