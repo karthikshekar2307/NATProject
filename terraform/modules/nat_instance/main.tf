@@ -57,10 +57,10 @@ resource "aws_network_interface" "private_eni" {
   }
 }
 
-resource "aws_instance" "this" {
-  ami               = var.ami_id
-  instance_type     = var.instance_type
-  associate_public_ip_address = false
+resource "aws_instance" "natinstance" {
+  ami           = var.ami_id
+  instance_type = var.instance_type
+  # Remove associate_public_ip_address entirely if you’re specifying network_interface blocks
 
   network_interface {
     device_index         = 0
@@ -70,7 +70,7 @@ resource "aws_instance" "this" {
   network_interface {
     device_index         = 1
     network_interface_id = aws_network_interface.private_eni.id
-  }
+  
 
   user_data = var.user_data
 

@@ -1,6 +1,6 @@
 output "nat_instance_id" {
   description = "The ID of the NAT EC2 instance"
-  value       = aws_instance.this.id
+  value       = aws_instance.natinstance.id
 }
 
 output "nat_public_eni_id" {
