@@ -7,7 +7,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "natterrabuck"
+    bucket         = "natbucktest"
     key            = "nat-infra/terraform.tfstate"
     region         = "ap-southeast-2"
     dynamodb_table = "tf-lock-monitoring-dev"

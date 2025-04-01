@@ -42,25 +42,32 @@ resource "aws_security_group" "natsg" {
 resource "aws_network_interface" "public_eni" {
   subnet_id       = var.public_subnet_id
   security_groups = [aws_security_group.natsg.id]
+  
+  # Disable source/dest check on this interface
+  source_dest_check = false
 
   tags = {
-    Name = "${var.name_prefix}-public-eni"
+    Name = "MyPublicENI"
   }
 }
 
 resource "aws_network_interface" "private_eni" {
   subnet_id       = var.private_subnet_id
   security_groups = [aws_security_group.natsg.id]
+  
+  # Disable source/dest check
+  source_dest_check = false
 
   tags = {
-    Name = "${var.name_prefix}-private-eni"
+    Name = "MyPrivateENI"
   }
 }
 
-resource "aws_instance" "this" {
-  ami               = var.ami_id
-  instance_type     = var.instance_type
-  associate_public_ip_address = false
+
+resource "aws_instance" "natinstance" {
+  ami           = var.ami_id
+  instance_type = var.instance_type
+  # Remove associate_public_ip_address entirely if you’re specifying network_interface blocks
 
   network_interface {
     device_index         = 0
@@ -81,8 +88,17 @@ resource "aws_instance" "this" {
   # Disable source/dest check
   # We'll run a local-exec to modify instance attribute
   provisioner "local-exec" {
-    command = <<EOT
-      aws ec2 modify-instance-attribute --instance-id ${self.id} --no-source-dest-check --region ${var.aws_region}
-    EOT
-  }
+  command = <<EOT
+    aws ec2 modify-network-interface-attribute \
+      --network-interface-id ${aws_network_interface.public_eni.id} \
+      --no-source-dest-check \
+      --region ap-southeast-2
+
+    aws ec2 modify-network-interface-attribute \
+      --network-interface-id ${aws_network_interface.private_eni.id} \
+      --no-source-dest-check \
+      --region ap-southeast-2
+  EOT
+}
+
 }

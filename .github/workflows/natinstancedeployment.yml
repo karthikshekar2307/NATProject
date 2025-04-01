@@ -29,7 +29,7 @@ jobs:
           if [ "${{ github.event.inputs.environment }}" = "prod" ]; then
             echo "AWS_ROLE=arn:aws:iam::<ACCOUNT_ID>:role/terraform-oidc-prod" >> $GITHUB_OUTPUT
           else
-            echo "AWS_ROLE=arn:aws:iam::896553234455:role/GithubOIDCNAT" >> $GITHUB_OUTPUT
+            echo "AWS_ROLE=arn:aws:iam::896553234455:role/GitHubActionsRole" >> $GITHUB_OUTPUT
           fi
 
       - name: Configure AWS Credentials via OIDC
