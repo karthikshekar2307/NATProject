@@ -1,0 +1,80 @@
+name: "NAT-Instance-Deploy"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Choose the environment workspace"
+        required: true
+        type: choice
+        options:
+          - test
+          - prod
+        default: test
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Repo
+        uses: actions/checkout@v3
+
+      - name: Choose AWS Role
+        id: choose-role
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "prod" ]; then
+            echo "AWS_ROLE=arn:aws:iam::<ACCOUNT_ID>:role/terraform-oidc-prod" >> $GITHUB_OUTPUT
+          else
+            echo "AWS_ROLE=arn:aws:iam::896553234455:role/GithubOIDCNAT" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ap-southeast-2
+          role-to-assume: ${{ steps.choose-role.outputs.AWS_ROLE }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: '1.3.9'
+
+      - name: Terraform Init
+        run: |
+          cd terraform
+          terraform init
+
+      - name: Select or Create Workspace
+        run: |
+          cd terraform
+          terraform workspace select ${{ github.event.inputs.environment }} || \
+          terraform workspace new ${{ github.event.inputs.environment }}
+
+      # -------------------------------
+      # Only run TEST plan step if environment == 'test'
+      # -------------------------------
+      - name: Terraform Plan (Test)
+        if: ${{ github.event.inputs.environment == 'test' }}
+        run: |
+          cd terraform
+          terraform plan -var-file="envs/test/terraform.tfvars" -out="planfile-test"
+
+      # -------------------------------
+      # Only run PROD plan step if environment == 'prod'
+      # -------------------------------
+      - name: Terraform Plan (Prod)
+        if: ${{ github.event.inputs.environment == 'prod' }}
+        run: |
+          cd terraform
+          terraform plan -var-file="envs/prod/terraform.tfvars" -out="planfile-prod"
+
+      - name: Terraform Apply
+        env:
+          TF_VAR_aws_region: ap-southeast-2
+        run: |
+          cd terraform
+          terraform apply -auto-approve "planfile-${{ github.event.inputs.environment }}"
