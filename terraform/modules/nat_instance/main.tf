@@ -41,21 +41,28 @@ resource "aws_security_group" "natsg" {
 
 resource "aws_network_interface" "public_eni" {
   subnet_id       = var.public_subnet_id
-  security_groups = [aws_security_group.natsg.id]
+  security_groups = [aws_security_group.this.id]
+  
+  # Disable source/dest check on this interface
+  source_dest_check = false
 
   tags = {
-    Name = "${var.name_prefix}-public-eni"
+    Name = "MyPublicENI"
   }
 }
 
 resource "aws_network_interface" "private_eni" {
   subnet_id       = var.private_subnet_id
-  security_groups = [aws_security_group.natsg.id]
+  security_groups = [aws_security_group.this.id]
+  
+  # Disable source/dest check
+  source_dest_check = false
 
   tags = {
-    Name = "${var.name_prefix}-private-eni"
+    Name = "MyPrivateENI"
   }
 }
+
 
 resource "aws_instance" "natinstance" {
   ami           = var.ami_id
