@@ -41,7 +41,7 @@ resource "aws_security_group" "natsg" {
 
 resource "aws_network_interface" "public_eni" {
   subnet_id       = var.public_subnet_id
-  security_groups = [aws_security_group.this.id]
+  security_groups = [aws_security_group.natsg.id]
   
   # Disable source/dest check on this interface
   source_dest_check = false
@@ -53,7 +53,7 @@ resource "aws_network_interface" "public_eni" {
 
 resource "aws_network_interface" "private_eni" {
   subnet_id       = var.private_subnet_id
-  security_groups = [aws_security_group.this.id]
+  security_groups = [aws_security_group.natsg.id]
   
   # Disable source/dest check
   source_dest_check = false
